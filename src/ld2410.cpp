@@ -149,20 +149,22 @@ bool ld2410::isConnected()
 }
 
 bool ld2410::read() {
+    #ifdef USE_FREERTOS
     bool new_data = false;
-    // Leggi tutti i dati disponibili dal buffer UART
     while (radar_uart_->available()) {
         add_to_buffer(radar_uart_->read());
         new_data = true;
     }
-
-    // Prova a leggere e processare un frame
-    bool frame_processed = read_frame_();
     
-    // Restituisce true se sono stati letti nuovi dati o se un frame è stato processato
+    bool frame_processed = read_frame_with_buffer_();
     return new_data || frame_processed;
+    #else
+    return read_frame_no_buffer_();
+    #endif
 }
 
+
+#ifdef USE_FREERTOS
 
 void ld2410::taskFunction(void* param) {
     ld2410* sensor = static_cast<ld2410*>(param);
@@ -196,6 +198,7 @@ void ld2410::autoReadTask(uint32_t stack, uint32_t priority, uint32_t core) {
         core
     );
 }
+#endif
 
 
 bool ld2410::presenceDetected()
